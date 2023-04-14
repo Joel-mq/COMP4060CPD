@@ -14,9 +14,6 @@ public class MainActivity extends AppCompatActivity {
     private String testString = "test";
 
 
-public class MainActivity extends AppCompatActivity {
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
