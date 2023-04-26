@@ -21,10 +21,7 @@ public class MainActivity extends AppCompatActivity {
     private Button button;
     private TextView test;
     private String testString = "test";
-
-
-public class MainActivity extends AppCompatActivity {
-
+    private static final int uniqueID=40111;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,17 +32,29 @@ public class MainActivity extends AppCompatActivity {
         button = findViewById(R.id.button);
         test = findViewById(R.id.textView);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+
+        NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.whorns)
                 .setContentTitle("Test notification")
                 .setContentText("This is a test notification")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                .setWhen(System.currentTimeMillis())
+                .setTicker("This is a ticker")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
 
             public void onClick(View v) {
-                notificationManager.notify(0, builder.build());
+                notificationManager.notify(uniqueID, notification.build());
                 test.setText(testString);
             }
         });
