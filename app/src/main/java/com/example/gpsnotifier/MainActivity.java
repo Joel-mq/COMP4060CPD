@@ -22,7 +22,10 @@ import android.app.Activity;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LastLocationRequest;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -33,10 +36,20 @@ public class MainActivity extends AppCompatActivity {
     private Button button;
     private TextView test;
     private String testString = "test";
-    private static final int uniqueID=40111;
+    private static final int uniqueID = 40111;
 
     //LocationRequest locationRequest;
     FusedLocationProviderClient fusedLocationProviderClient;
+    LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
+            .setWaitForAccurateLocation(true)
+            .build();
+
+    LocationCallback locationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(@NonNull LocationResult locationResult) {
+            super.onLocationResult(locationResult);
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,9 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
         //locationRequest = new LocationRequest();
         //locationRequest.Builder.setInterval()
-        LocationRequest.Builder locationRequest = new LocationRequest.Builder(5000);
-        locationRequest.setIntervalMillis(5000);
-        locationRequest.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -100,10 +111,16 @@ public class MainActivity extends AppCompatActivity {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            LocationServices.getFusedLocationProviderClient(getApplicationContext())
+                    .requestLocationUpdates(locationRequest, locationCallback, null);
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
-                    test.setText(location.getLatitude() + " " + location.getLongitude());
+                    if (location == null) {
+                        test.setText("null");
+                    } else {
+                        test.setText("???");
+                    }
                 }
             });
         } else {
