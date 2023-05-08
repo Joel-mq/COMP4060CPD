@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
                     if (location == null) {
                         test.setText("null");
                     } else {
-                        test.setText("???");
+                        test.setText(location.getLatitude() + " " + location.getLongitude());
                     }
                 }
             });
