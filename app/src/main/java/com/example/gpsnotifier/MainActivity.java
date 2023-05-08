@@ -1,19 +1,31 @@
 package com.example.gpsnotifier;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.app.Activity;
+import android.widget.Toast;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     private String testString = "test";
     private static final int uniqueID=40111;
 
+    //LocationRequest locationRequest;
+    FusedLocationProviderClient fusedLocationProviderClient;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,17 +63,56 @@ public class MainActivity extends AppCompatActivity {
                 .setAutoCancel(true);
 
 
+        // button
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+        //locationRequest = new LocationRequest();
+        //locationRequest.Builder.setInterval()
+        LocationRequest.Builder locationRequest = new LocationRequest.Builder(5000);
+        locationRequest.setIntervalMillis(5000);
+        locationRequest.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
-
             public void onClick(View v) {
+                updateGPS();
                 notificationManager.notify(uniqueID, notification.build());
-                test.setText(testString);
+
             }
         });
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case 1:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    updateGPS();
+                } else {
+                    Toast.makeText(this, "NO LMAO", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+        }
+    }
+
+    private void updateGPS() {
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    test.setText(location.getLatitude() + " " + location.getLongitude());
+                }
+            });
+        } else {
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            }
+        }
+    }
     private void createNotificationChannel() {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
