@@ -38,6 +38,11 @@ public class MainActivity extends AppCompatActivity {
     private String testString = "test";
     private static final int uniqueID = 40111;
 
+    private static double pLat = -33.7856;
+    private static double pLong = 151.1990;
+
+    private static double distanceFrom = 0.001;
+
     //LocationRequest locationRequest;
     FusedLocationProviderClient fusedLocationProviderClient;
     LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
@@ -87,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 updateGPS();
                 notificationManager.notify(uniqueID, notification.build());
-
             }
         });
     }
@@ -119,7 +123,12 @@ public class MainActivity extends AppCompatActivity {
                     if (location == null) {
                         test.setText("null");
                     } else {
-                        test.setText(location.getLatitude() + " " + location.getLongitude());
+                        if (location.getLatitude()-distanceFrom < pLat && pLat < location.getLatitude()+distanceFrom &&
+                            location.getLongitude()-distanceFrom < pLong && pLong < location.getLongitude()+distanceFrom) {
+                            test.setText(location.getLatitude() + " " + location.getLongitude() + " near");
+                        } else {
+                            test.setText(location.getLatitude() + " " + location.getLongitude());
+                        }
                     }
                 }
             });
