@@ -16,6 +16,9 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.app.Activity;
@@ -43,6 +46,10 @@ public class MainActivity extends AppCompatActivity {
 
     private static double distanceFrom = 0.001;
 
+
+    AutoCompleteTextView autoCompleteTextView;
+    ArrayAdapter<String> adapterItems;
+    private BusRoute _144ChatswoodToManly_ = new BusRoute(52);
 
 
     //LocationRequest locationRequest;
@@ -89,6 +96,21 @@ public class MainActivity extends AppCompatActivity {
         //locationRequest = new LocationRequest();
         //locationRequest.Builder.setInterval()
 
+        _144ChatswoodToManly_.addStop(-33.79740449048758, 151.1794862107421, "Chatswood Station, Victoria Ave, Stand F");
+        _144ChatswoodToManly_.addStop(-33.800287048183776, 151.1795093172719, "Pacific Hwy at Ellis St");
+        String[] items = _144ChatswoodToManly_.returnStringOfBusStops();
+        autoCompleteTextView = findViewById(R.id.auto_complete_textview);
+        adapterItems = new ArrayAdapter<String>(this, R.layout.list_item, items);
+
+        autoCompleteTextView.setAdapter(adapterItems);
+
+        autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                System.out.println(position);
+            }
+        });
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -125,12 +147,18 @@ public class MainActivity extends AppCompatActivity {
                     if (location == null) {
                         test.setText("null");
                     } else {
-                        if (location.getLatitude()-distanceFrom < pLat && pLat < location.getLatitude()+distanceFrom &&
-                            location.getLongitude()-distanceFrom < pLong && pLong < location.getLongitude()+distanceFrom) {
-                            test.setText(location.getLatitude() + " " + location.getLongitude() + " near");
-                        } else {
-                            test.setText(location.getLatitude() + " " + location.getLongitude());
+                        test.setText(location.getLatitude() + " " + location.getLongitude());
+                        double tempLat;
+                        double tempLong;
+                        for (int i = 0; i < _144ChatswoodToManly_.i; i++) {
+                            tempLat = _144ChatswoodToManly_.busStops[i].latitude;
+                            tempLong = _144ChatswoodToManly_.busStops[i].longitude;
+                            if (location.getLatitude()-distanceFrom < tempLat && tempLat < location.getLatitude()+distanceFrom &&
+                                    location.getLongitude()-distanceFrom < tempLong && tempLong < location.getLongitude()+distanceFrom) {
+                                test.setText(location.getLatitude() + " " + location.getLongitude() + " near " + _144ChatswoodToManly_.busStops[i].name);
+                            }
                         }
+
                     }
                 }
             });

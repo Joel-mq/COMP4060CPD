@@ -16,4 +16,12 @@ public class BusRoute {
             System.out.println("too many stops, redefine route length better >:(");
         }
     }
+
+    public String[] returnStringOfBusStops() {
+        String[] tempString = new String[i];
+            for (int j = 0; j < i; j++) {
+                tempString[j] = busStops[j].name;
+            }
+        return tempString;
+    }
 }

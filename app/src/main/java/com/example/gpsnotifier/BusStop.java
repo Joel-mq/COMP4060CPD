@@ -11,4 +11,6 @@ public class BusStop {
         longitude = lon;
         name = nam;
     }
+
+
 }
