@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static double distanceFrom = 0.001;
 
+
+
     //LocationRequest locationRequest;
     FusedLocationProviderClient fusedLocationProviderClient;
     LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
