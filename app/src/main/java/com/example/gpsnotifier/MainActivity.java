@@ -7,12 +7,16 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -36,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String CHANNEL_ID = "GPSNotifierID";
     private Button button;
+    private Button snoozeButton;
     private TextView stateOfLocation;
     private TextView locationTracked;
     private static final int uniqueID = 40111;
@@ -49,12 +54,15 @@ public class MainActivity extends AppCompatActivity {
 
     private int stopTracked = -1;
     private boolean started = false;
+    boolean playAlarm = true;
     private Handler handler = new Handler();
 
     private final int UPDATE_DELAY_SECONDS = 5;
 
     NotificationCompat.Builder notification;
     NotificationManagerCompat notificationManager;
+
+    Ringtone r;
 
     private Runnable runnable = new Runnable() {
         @Override
@@ -93,16 +101,25 @@ public class MainActivity extends AppCompatActivity {
             super.onLocationResult(locationResult);
         }
     };
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         createNotificationChannel();
 
+        Uri alarmNoise = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        r = RingtoneManager.getRingtone(getApplicationContext(), alarmNoise);
+
+        // buttons!
         button = findViewById(R.id.button);
+        snoozeButton = findViewById(R.id.snoozeButton);
+
+        // text
         stateOfLocation = findViewById(R.id.textView);
         locationTracked = findViewById(R.id.textViewLocation);
 
+        // Notification
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -120,12 +137,9 @@ public class MainActivity extends AppCompatActivity {
                 .setAutoCancel(true);
 
 
-        // button
         notificationManager = NotificationManagerCompat.from(this);
 
-        //locationRequest = new LocationRequest();
-        //locationRequest.Builder.setInterval()
-
+        // yucky bus route stuff
         _144ChatswoodToManly_.addStop(-33.79740449048758, 151.1794862107421, "Chatswood Station, Victoria Ave, Stand F");
         _144ChatswoodToManly_.addStop(-33.800287048183776, 151.1795093172719, "Pacific Hwy at Ellis St");
         _144ChatswoodToManly_.addStop(-33.802413886402014, 151.1796451964106, "Pacific Hwy at Gordon Ave");
@@ -179,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
         _144ChatswoodToManly_.addStop(-33.79595390780698, 151.27991582954058, "Sydney Rd opp George St");
         _144ChatswoodToManly_.addStop(-33.7964137277086, 151.28271380549666, "Ivanhoe Park, Sydney Rd");
 
-
+        // add bus route to dropdown menu
         String[] items = _144ChatswoodToManly_.returnStringOfBusStops();
         autoCompleteTextView = findViewById(R.id.auto_complete_textview);
         adapterItems = new ArrayAdapter<String>(this, R.layout.list_item, items);
@@ -199,14 +213,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // buttons again
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 updateGPS();
-                //notificationManager.notify(uniqueID, notification.build());
             }
         });
 
+        snoozeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (playAlarm) {
+                    r.stop();
+                    playAlarm = false;
+                    snoozeButton.setText("Unsnooze");
+                } else {
+                    playAlarm = true;
+                    snoozeButton.setText("Snooze");
+                }
+            }
+        });
 
 
     }
@@ -251,7 +278,14 @@ public class MainActivity extends AppCompatActivity {
                                 stateOfLocation.setText("Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude() + " You are within " + (int)distanceFromMeters + "m from " + _144ChatswoodToManly_.busStops[stopTracked].name);
 
                                 // notification
-                                notificationManager.notify(uniqueID, notification.build());
+
+
+                                if (!r.isPlaying() && playAlarm) {
+                                    notificationManager.notify(uniqueID, notification.build());
+
+                                    r.play();
+                                }
+
                             }
                             //                        double tempLat;
                             //                        double tempLong;
