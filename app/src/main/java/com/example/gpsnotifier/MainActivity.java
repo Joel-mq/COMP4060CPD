@@ -15,6 +15,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -33,24 +34,51 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String CHANNEL_ID = "testID";
+    private static final String CHANNEL_ID = "GPSNotifierID";
     private Button button;
     private TextView stateOfLocation;
     private TextView locationTracked;
-    private String testString = "test";
     private static final int uniqueID = 40111;
 
     private static double pLat = -33.7856;
     private static double pLong = 151.1990;
 
-    private static double distanceFrom = 0.001;
+    private double distanceFromMeters = 200;
+
+    private final double METER_TO_COORD_OFFSET = 111000;
 
     private int stopTracked = -1;
+    private boolean started = false;
+    private Handler handler = new Handler();
 
+    private final int UPDATE_DELAY_SECONDS = 5;
+
+    NotificationCompat.Builder notification;
+    NotificationManagerCompat notificationManager;
+
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            updateGPS();
+            if(started) {
+                start();
+            }
+        }
+    };
+
+    public void stop() {
+        started = false;
+        handler.removeCallbacks(runnable);
+    }
+
+    public void start() {
+        started = true;
+        handler.postDelayed(runnable, UPDATE_DELAY_SECONDS*1000);
+    }
 
     AutoCompleteTextView autoCompleteTextView;
     ArrayAdapter<String> adapterItems;
-    private BusRoute _144ChatswoodToManly_ = new BusRoute(52);
+    private BusRoute _144ChatswoodToManly_ = new BusRoute(51);
 
 
     //LocationRequest locationRequest;
@@ -81,10 +109,10 @@ public class MainActivity extends AppCompatActivity {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
 
-        NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.whorns)
-                .setContentTitle("Test notification")
-                .setContentText("This is a test notification")
+                .setContentTitle("GPSNotifier")
+                .setContentText("You are close to your selected destination")
                 .setWhen(System.currentTimeMillis())
                 .setTicker("This is a ticker")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -93,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         // button
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager = NotificationManagerCompat.from(this);
 
         //locationRequest = new LocationRequest();
         //locationRequest.Builder.setInterval()
@@ -152,8 +180,6 @@ public class MainActivity extends AppCompatActivity {
         _144ChatswoodToManly_.addStop(-33.7964137277086, 151.28271380549666, "Ivanhoe Park, Sydney Rd");
 
 
-
-
         String[] items = _144ChatswoodToManly_.returnStringOfBusStops();
         autoCompleteTextView = findViewById(R.id.auto_complete_textview);
         adapterItems = new ArrayAdapter<String>(this, R.layout.list_item, items);
@@ -165,6 +191,11 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 locationTracked.setText("Tracking " + _144ChatswoodToManly_.busStops[position].name);
                 stopTracked = position;
+                updateGPS();
+                if (!started) {
+
+                    start();
+                }
             }
         });
 
@@ -172,9 +203,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 updateGPS();
-                notificationManager.notify(uniqueID, notification.build());
+                //notificationManager.notify(uniqueID, notification.build());
             }
         });
+
+
+
     }
 
     @Override
@@ -184,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case 1:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    updateGPS();
+                    //updateGPS();
                 } else {
                     Toast.makeText(this, "NO LMAO", Toast.LENGTH_SHORT).show();
                     finish();
@@ -205,15 +239,19 @@ public class MainActivity extends AppCompatActivity {
                         if (location == null) {
                             stateOfLocation.setText("Location not found");
                         } else {
-                            stateOfLocation.setText(location.getLatitude() + " " + location.getLongitude());
+                            stateOfLocation.setText("Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude());
                             double tempLat;
                             double tempLong;
+                            double calculatedDistance = distanceFromMeters/METER_TO_COORD_OFFSET;
 
                             tempLat = _144ChatswoodToManly_.busStops[stopTracked].latitude;
                             tempLong = _144ChatswoodToManly_.busStops[stopTracked].longitude;
-                            if (location.getLatitude()-distanceFrom < tempLat && tempLat < location.getLatitude()+distanceFrom &&
-                                    location.getLongitude()-distanceFrom < tempLong && tempLong < location.getLongitude()+distanceFrom) {
-                                stateOfLocation.setText(location.getLatitude() + " " + location.getLongitude() + " near " + _144ChatswoodToManly_.busStops[stopTracked].name);
+                            if (location.getLatitude()-calculatedDistance < tempLat && tempLat < location.getLatitude()+calculatedDistance &&
+                                    location.getLongitude()-calculatedDistance < tempLong && tempLong < location.getLongitude()+calculatedDistance) {
+                                stateOfLocation.setText("Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude() + " You are within " + (int)distanceFromMeters + "m from " + _144ChatswoodToManly_.busStops[stopTracked].name);
+
+                                // notification
+                                notificationManager.notify(uniqueID, notification.build());
                             }
                             //                        double tempLat;
                             //                        double tempLong;
@@ -243,8 +281,8 @@ public class MainActivity extends AppCompatActivity {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "test name";
-            String description = "test desc";
+            CharSequence name = "GPSNotifier";
+            String description = "For the GPS thingo";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
