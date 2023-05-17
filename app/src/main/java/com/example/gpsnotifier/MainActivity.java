@@ -21,11 +21,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.TextView;
-import android.app.Activity;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LastLocationRequest;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -37,7 +35,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String CHANNEL_ID = "testID";
     private Button button;
-    private TextView test;
+    private TextView stateOfLocation;
+    private TextView locationTracked;
     private String testString = "test";
     private static final int uniqueID = 40111;
 
@@ -45,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     private static double pLong = 151.1990;
 
     private static double distanceFrom = 0.001;
+
+    private int stopTracked = -1;
 
 
     AutoCompleteTextView autoCompleteTextView;
@@ -71,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
         createNotificationChannel();
 
         button = findViewById(R.id.button);
-        test = findViewById(R.id.textView);
+        stateOfLocation = findViewById(R.id.textView);
+        locationTracked = findViewById(R.id.textViewLocation);
 
 
         Intent intent = new Intent(this, MainActivity.class);
@@ -107,7 +109,8 @@ public class MainActivity extends AppCompatActivity {
         autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                System.out.println(position);
+                locationTracked.setText("Tracking " + _144ChatswoodToManly_.busStops[position].name);
+                stopTracked = position;
             }
         });
 
@@ -144,21 +147,34 @@ public class MainActivity extends AppCompatActivity {
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
-                    if (location == null) {
-                        test.setText("null");
-                    } else {
-                        test.setText(location.getLatitude() + " " + location.getLongitude());
-                        double tempLat;
-                        double tempLong;
-                        for (int i = 0; i < _144ChatswoodToManly_.i; i++) {
-                            tempLat = _144ChatswoodToManly_.busStops[i].latitude;
-                            tempLong = _144ChatswoodToManly_.busStops[i].longitude;
+                    if (stopTracked >= 0) {
+                        if (location == null) {
+                            stateOfLocation.setText("Location not found");
+                        } else {
+                            stateOfLocation.setText(location.getLatitude() + " " + location.getLongitude());
+                            double tempLat;
+                            double tempLong;
+
+                            tempLat = _144ChatswoodToManly_.busStops[stopTracked].latitude;
+                            tempLong = _144ChatswoodToManly_.busStops[stopTracked].longitude;
                             if (location.getLatitude()-distanceFrom < tempLat && tempLat < location.getLatitude()+distanceFrom &&
                                     location.getLongitude()-distanceFrom < tempLong && tempLong < location.getLongitude()+distanceFrom) {
-                                test.setText(location.getLatitude() + " " + location.getLongitude() + " near " + _144ChatswoodToManly_.busStops[i].name);
+                                stateOfLocation.setText(location.getLatitude() + " " + location.getLongitude() + " near " + _144ChatswoodToManly_.busStops[stopTracked].name);
                             }
-                        }
+                            //                        double tempLat;
+                            //                        double tempLong;
+                            //                        for (int i = 0; i < _144ChatswoodToManly_.i; i++) {
+                            //                            tempLat = _144ChatswoodToManly_.busStops[i].latitude;
+                            //                            tempLong = _144ChatswoodToManly_.busStops[i].longitude;
+                            //                            if (location.getLatitude()-distanceFrom < tempLat && tempLat < location.getLatitude()+distanceFrom &&
+                            //                                    location.getLongitude()-distanceFrom < tempLong && tempLong < location.getLongitude()+distanceFrom) {
+                            //                                stateOfLocation.setText(location.getLatitude() + " " + location.getLongitude() + " near " + _144ChatswoodToManly_.busStops[i].name);
+                            //                            }
+                            //                        }
 
+                        }
+                    } else {
+                        stateOfLocation.setText("Choose a stop first");
                     }
                 }
             });
