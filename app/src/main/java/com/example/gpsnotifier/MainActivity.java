@@ -25,6 +25,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,14 +42,19 @@ public class MainActivity extends AppCompatActivity {
     private static final String CHANNEL_ID = "GPSNotifierID";
     private Button button;
     private Button snoozeButton;
+    private Button meterButton;
     private TextView stateOfLocation;
     private TextView locationTracked;
+    private TextView routeTracked;
+
+    private TextView meterText;
+    private EditText inputNumber;
     private static final int uniqueID = 40111;
 
     private static double pLat = -33.7856;
     private static double pLong = 151.1990;
 
-    private double distanceFromMeters = 200;
+    private double distanceFromMeters = 100;
 
     private final double METER_TO_COORD_OFFSET = 111000;
 
@@ -84,9 +90,15 @@ public class MainActivity extends AppCompatActivity {
         handler.postDelayed(runnable, UPDATE_DELAY_SECONDS*1000);
     }
 
-    AutoCompleteTextView autoCompleteTextView;
-    ArrayAdapter<String> adapterItems;
-    private BusRoute _144ChatswoodToManly_ = new BusRoute(51);
+    AutoCompleteTextView autoCompleteTextViewRoute;
+    ArrayAdapter<String> adapterItemsRoute;
+
+    AutoCompleteTextView autoCompleteTextViewStops;
+    ArrayAdapter<String> adapterItemsStops;
+    int busRouteLength = 0;
+    private BusRoute[] busRoutes = new BusRoute[2];
+    private BusRoute _144ChatswoodToManly_ = new BusRoute(51, "144 Chatswood to Manly");
+    private BusRoute _144ManlyToChatswood_ = new BusRoute(51, "144 Manly to Chatswood");
 
 
     //LocationRequest locationRequest;
@@ -112,13 +124,22 @@ public class MainActivity extends AppCompatActivity {
         Uri alarmNoise = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
         r = RingtoneManager.getRingtone(getApplicationContext(), alarmNoise);
 
+        //meterText.setText(distanceFromMeters + "m radius");
+
         // buttons!
         button = findViewById(R.id.button);
         snoozeButton = findViewById(R.id.snoozeButton);
+        meterButton = findViewById(R.id.meterButton);
 
         // text
         stateOfLocation = findViewById(R.id.textView);
         locationTracked = findViewById(R.id.textViewLocation);
+        routeTracked = findViewById(R.id.textViewRoute);
+
+        meterText = findViewById(R.id.textViewMeters);
+        inputNumber = findViewById(R.id.editTextNumber);
+
+        meterText.setText(distanceFromMeters + "m radius");
 
         // Notification
 
@@ -194,25 +215,93 @@ public class MainActivity extends AppCompatActivity {
         _144ChatswoodToManly_.addStop(-33.79595390780698, 151.27991582954058, "Sydney Rd opp George St");
         _144ChatswoodToManly_.addStop(-33.7964137277086, 151.28271380549666, "Ivanhoe Park, Sydney Rd");
 
+        _144ManlyToChatswood_.addStop(-33.79803519560409, 151.28464922381917, "Manly Wharf, Belgrave St, Stand G");
+        _144ManlyToChatswood_.addStop(-33.796592209459384, 151.2828314872177, "Sydney Rd opp Ivanhoe Park");
+        _144ManlyToChatswood_.addStop(-33.79619543060268, 151.28057905998295, "Sydney Rd opp Birkley Rd");
+        _144ManlyToChatswood_.addStop(-33.79610713172836, 151.2777697403344, "Sydney Rd opp Crescent St");
+        _144ManlyToChatswood_.addStop(-33.79582035762176, 151.27558645510138, "Sydney Rd opp Cohen St");
+        _144ManlyToChatswood_.addStop(-33.79510195022769, 151.27316176734172, "Sydney Rd at Bellevue St");
+        _144ManlyToChatswood_.addStop(-33.795098797941904, 151.27140361155435, "Sydney Rd at Austin St");
+        _144ManlyToChatswood_.addStop(-33.795054665947724, 151.2686781855942, "Sydney Rd after Hill St");
+        _144ManlyToChatswood_.addStop(-33.794607773363786, 151.26564002474004, "Sydney Rd before Condamine St");
+        _144ManlyToChatswood_.addStop(-33.794244940126504, 151.2630915402876, "Sydney Rd at Woodland St");
+        _144ManlyToChatswood_.addStop(-33.79407759872399, 151.26016207700238, "Sydney Rd at West St");
+        _144ManlyToChatswood_.addStop(-33.79462154380534, 151.25828537028957, "Sydney Rd at Wanganella St");
+        _144ManlyToChatswood_.addStop(-33.795820337109795, 151.25420998388086, "Sydney Rd at Coral St");
+        _144ManlyToChatswood_.addStop(-33.79891894583187, 151.25164560691286, "Manly Rd at Heaton Ave");
+        _144ManlyToChatswood_.addStop(-33.799945075114, 151.24893087414566, "Manly Rd at Avona Cres");
+        _144ManlyToChatswood_.addStop(-33.805262019050566, 151.24653508145659, "Spit East Reserve, Spit Rd");
+        _144ManlyToChatswood_.addStop(-33.812875714535316, 151.2446439382591, "Spit Rd opp Medusa St");
+        _144ManlyToChatswood_.addStop(-33.817014881860175, 151.24359130014116, "Spit Rd opp Bickell Rd");
+        _144ManlyToChatswood_.addStop(-33.819141551212795, 151.24408159049554, "Spit Rd at Stanton Rd");
+        _144ManlyToChatswood_.addStop(-33.82175001298617, 151.24394125891942, "Spit Rd after Awaba St");
+        _144ManlyToChatswood_.addStop(-33.824147944923425, 151.24165086431975, "Spit Junction B-Line, Spit Rd");
+        _144ManlyToChatswood_.addStop(-33.82447066260181, 151.23774735457823, "Military Rd at Wudgong St");
+        _144ManlyToChatswood_.addStop(-33.82623668155318, 151.23273195844337, "Military Rd opp Prince St");
+        _144ManlyToChatswood_.addStop(-33.82846908767893, 151.22976788748608, "Military Rd before Cabramatta Rd");
+        _144ManlyToChatswood_.addStop(-33.82902801686861, 151.22859152811247, "Military Rd at Spencer Rd");
+        _144ManlyToChatswood_.addStop(-33.830686066800844, 151.2257973119592, "Military Rd before Hampden Ave");
+        _144ManlyToChatswood_.addStop(-33.83164453363238, 151.22307973488358, "Neutral Bay Junction, Military Rd, Stand C");
+        _144ManlyToChatswood_.addStop(-33.83027844906698, 151.21865810611044, "Military Rd opp Big Bear Shopping Centre");
+        _144ManlyToChatswood_.addStop(-33.83015831239021, 151.21801826071888, "Watson Street Interchange, Stand B");
+        _144ManlyToChatswood_.addStop(-33.8290819832848, 151.2091514897882, "Falcon St at Miller St");
+        _144ManlyToChatswood_.addStop(-33.82869784742967, 151.20700064687918, "North Sydney Boys High School, Falcon St");
+        _144ManlyToChatswood_.addStop(-33.827953155579515, 151.2021337293793, "Falcon St at Alexander St");
+        _144ManlyToChatswood_.addStop(-33.827163567503625, 151.20004254595463, "Pacific Hwy after Shirley Rd");
+        _144ManlyToChatswood_.addStop(-33.82632221995384, 151.1992635582607, "Pacific Hwy at Hume St");
+        _144ManlyToChatswood_.addStop(-33.823499090337556, 151.1963204938401, "Pacific Hwy before Christie St");
+        _144ManlyToChatswood_.addStop(-33.82370761877501, 151.19370967279477, "St Leonards Station, Pacific Hwy, Stand C");
+        _144ManlyToChatswood_.addStop(-33.82479502686459, 151.19051963694685, "Pacific Hwy opp Gore Hill Oval");
+        _144ManlyToChatswood_.addStop(-33.8236639481769, 151.1872864162714, "Pacific Hwy at Bellevue Ave");
+        _144ManlyToChatswood_.addStop(-33.821347838571626, 151.1856843268921, "Pacific Hwy opp TAFE St Leonards");
+        _144ManlyToChatswood_.addStop(-33.81841504724499, 151.1827073828333, "Pacific Hwy opp Campbell St");
+        _144ManlyToChatswood_.addStop(-33.817427523039605, 151.1803572688355, "Pacific Hwy opp Dickson Ave");
+        _144ManlyToChatswood_.addStop(-33.816059734489556, 151.178404625206, "Pacific Hwy opp Hotham Pde");
+        _144ManlyToChatswood_.addStop(-33.81428333585632, 151.1773686364082, "Pacific Hwy at Allison Ave");
+        _144ManlyToChatswood_.addStop(-33.81147680488826, 151.17565913824617, "Pacific Hwy at Burley St");
+        _144ManlyToChatswood_.addStop(-33.80891251461936, 151.17829742065467, "Pacific Hwy opp Eric Rd");
+        _144ManlyToChatswood_.addStop(-33.80744482761205, 151.17935259521323, "Pacific Hwy opp Palmer St");
+        _144ManlyToChatswood_.addStop(-33.80494712693076, 151.17916666136634, "Pacific Hwy after Mowbray Rd");
+        _144ManlyToChatswood_.addStop(-33.802297694661256, 151.17941246569578, "Pacific Hwy at Sutherland Rd");
+        _144ManlyToChatswood_.addStop(-33.796766041992015, 151.18043349704834, "Chatswood Station");
+
+
         // add bus route to dropdown menu
-        String[] items = _144ChatswoodToManly_.returnStringOfBusStops();
-        autoCompleteTextView = findViewById(R.id.auto_complete_textview);
-        adapterItems = new ArrayAdapter<String>(this, R.layout.list_item, items);
+        busRoutes[0] = _144ChatswoodToManly_;
+        busRoutes[1] = _144ManlyToChatswood_;
 
-        autoCompleteTextView.setAdapter(adapterItems);
+        String[] items = {busRoutes[0].nam, busRoutes[1].nam};
+        autoCompleteTextViewRoute = findViewById(R.id.auto_complete_textviewroute);
+        adapterItemsRoute = new ArrayAdapter<String>(MainActivity.this, R.layout.list_item, items);
 
-        autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        autoCompleteTextViewRoute.setAdapter(adapterItemsRoute);
+
+        autoCompleteTextViewRoute.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                locationTracked.setText("Tracking " + _144ChatswoodToManly_.busStops[position].name);
-                stopTracked = position;
-                updateGPS();
-                if (!started) {
+                routeTracked.setText("Selected " + busRoutes[position].nam);
+                String[] items = busRoutes[position].returnStringOfBusStops();
+                autoCompleteTextViewStops = findViewById(R.id.auto_complete_textviewstops);
+                adapterItemsStops = new ArrayAdapter<String>(MainActivity.this, R.layout.list_item, items);
 
-                    start();
-                }
+                autoCompleteTextViewStops.setAdapter(adapterItemsStops);
+
+                autoCompleteTextViewStops.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        locationTracked.setText("Tracking " + _144ChatswoodToManly_.busStops[position].name);
+                        stopTracked = position;
+                        updateGPS();
+                        if (!started) {
+
+                            start();
+                        }
+                    }
+                });
             }
         });
+
+
 
         // buttons again
         button.setOnClickListener(new View.OnClickListener() {
@@ -236,7 +325,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        meterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+                if (inputNumber.length() > 0) {
+                    distanceFromMeters = Integer.parseInt(inputNumber.getText().toString());
+                }
+                meterText.setText(distanceFromMeters + "m radius");
+                r.stop();
+                updateGPS();
+            }
+        });
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        r.stop();
     }
 
     @Override
@@ -285,6 +391,9 @@ public class MainActivity extends AppCompatActivity {
                                     notificationManager.notify(uniqueID, notification.build());
 
                                     r.play();
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                        r.setLooping(false);
+                                    }
                                 }
 
                             }
