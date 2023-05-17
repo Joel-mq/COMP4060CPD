@@ -93,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
             super.onLocationResult(locationResult);
         }
     };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
