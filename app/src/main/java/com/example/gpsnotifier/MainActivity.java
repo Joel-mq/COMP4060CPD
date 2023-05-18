@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.whorns)
+                .setSmallIcon(R.drawable.notificationpng)
                 .setContentTitle("GPSNotifier")
                 .setContentText("You are close to your selected destination")
                 .setWhen(System.currentTimeMillis())
