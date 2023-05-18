@@ -2,10 +2,12 @@ package com.example.gpsnotifier;
 
 public class BusRoute {
     BusStop[] busStops;
+    String nam;
     int i = 0;
 
-    public BusRoute(int stopsLength) {
+    public BusRoute(int stopsLength, String name) {
         busStops = new BusStop[stopsLength];
+        nam = name;
     }
 
     public void addStop(double lat, double lon, String nam) {
