@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private final double METER_TO_COORD_OFFSET = 111000;
 
     private int stopTracked = -1;
+    private int busRouteTracked = -1;
     private boolean started = false;
     boolean playAlarm = true;
     private Handler handler = new Handler();
@@ -285,12 +286,13 @@ public class MainActivity extends AppCompatActivity {
                 adapterItemsStops = new ArrayAdapter<String>(MainActivity.this, R.layout.list_item, items);
 
                 autoCompleteTextViewStops.setAdapter(adapterItemsStops);
+                busRouteTracked = position;
 
                 autoCompleteTextViewStops.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        locationTracked.setText("Tracking " + _144ChatswoodToManly_.busStops[position].name);
-                        stopTracked = position;
+                    public void onItemClick(AdapterView<?> parent, View view, int positionStop, long id) {
+                        locationTracked.setText("Tracking " + busRoutes[busRouteTracked].busStops[positionStop].name);
+                        stopTracked = positionStop;
                         updateGPS();
                         if (!started) {
 
@@ -378,8 +380,8 @@ public class MainActivity extends AppCompatActivity {
                             double tempLong;
                             double calculatedDistance = distanceFromMeters/METER_TO_COORD_OFFSET;
 
-                            tempLat = _144ChatswoodToManly_.busStops[stopTracked].latitude;
-                            tempLong = _144ChatswoodToManly_.busStops[stopTracked].longitude;
+                            tempLat = busRoutes[busRouteTracked].busStops[stopTracked].latitude;
+                            tempLong = busRoutes[busRouteTracked].busStops[stopTracked].longitude;
                             if (location.getLatitude()-calculatedDistance < tempLat && tempLat < location.getLatitude()+calculatedDistance &&
                                     location.getLongitude()-calculatedDistance < tempLong && tempLong < location.getLongitude()+calculatedDistance) {
                                 stateOfLocation.setText("Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude() + " You are within " + (int)distanceFromMeters + "m from " + _144ChatswoodToManly_.busStops[stopTracked].name);
